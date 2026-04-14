@@ -50,7 +50,7 @@ Internet
 
 ### Routage
 - Default route → `172.19.0.1`
-- Routes internes :
+- Routes internes : (Permettent le retour vers le Switch de niveau 3)
   - `10.0.0.0/8` → `172.17.0.255`
   - `172.18.0.0/16` → `172.17.0.255`
   - `192.168.0.0/24` → `172.17.0.255`
