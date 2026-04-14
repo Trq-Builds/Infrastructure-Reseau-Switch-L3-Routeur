@@ -1,28 +1,94 @@
-# Doc-Technique-SwitchL3-Routeur
+# ` 🌐 `︲Documentation : Infrastructure Réseau (Switch L3 & Routeur)
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Cisco-ISR4221-blue?style=for-the-badge&logo=cisco&logoColor=white">
+  <img src="https://img.shields.io/badge/Cisco-Catalyst_3750v2-orange?style=for-the-badge&logo=cisco&logoColor=white">
+  <img src="https://img.shields.io/badge/Réseau-VLANs-green?style=for-the-badge">
+  <img src="https://img.shields.io/badge/NAT-Enabled-purple?style=for-the-badge">
+</p>
 
 ---
 
-## Explication sur le fichier "`config-router-complet`"
+Cette documentation présente la configuration complète d’une infrastructure réseau basée sur un **routeur Cisco ISR 4221** et un **switch de couche 3 Catalyst 3750v2**.
 
-C'est la configuration d'un **routeur Cisco** (modèle ISR 4221) qui fait le lien entre un réseau interne et Internet.
-
----
-
-## Ce que fait le routeur
-
-### 1. 🌐 Connexion Internet
-Le routeur a **deux "portes"** :
-- Une porte **vers Internet** (`GigabitEthernet0/0/0`) avec l'IP `172.19.0.2`
-- Une porte **vers le réseau local** (`GigabitEthernet0/0/1`) avec l'IP `172.17.0.1`
+Objectif : comprendre l’architecture, le routage, le cloisonnement réseau (VLAN) et les mécanismes de communication entre les différents segments.
 
 ---
 
-### 2. 🔁 Le NAT (Partage de connexion)
-Le routeur fait du **NAT**, c'est comme la box Internet à la maison.
+## ` 📑 `︲Sommaire
 
-> Tous les appareils du réseau local partagent **une seule adresse IP publique** pour aller sur Internet
+1. [`📡`︲Présentation du routeur](#routeur)
 
-Les réseaux qui ont le droit de passer par Internet :
+2. [`🔁`︲Fonctionnement du NAT](#nat)
+3. [`🗺️`︲Routage](#routage)
+
+4. [`🔐`︲Sécurité du routeur](#securite-routeur)
+5. [`🖧`︲Présentation du switch L3](#switch)
+
+6. [`🗂️`︲VLANs](#vlans)
+
+7. [`📡`︲DHCP Helper](#dhcp)
+
+8. [`🔁`︲Routage inter-VLAN](#intervlan)
+
+9. [`🔐`︲Sécurité du switch](#securite-switch)
+
+10. [`⚠️`︲Analyse des faiblesses](#faiblesses)
+
+11. [`📐`︲Schéma réseau](#schema)
+
+---
+
+<a id="routeur"></a>
+# ` 📡 `︲Présentation du routeur
+
+---
+
+> [!NOTE]
+> Le routeur assure la **connexion entre le réseau interne et Internet**.  
+> Il agit comme point de sortie unique pour tous les équipements internes.
+
+---
+
+### ` ⚙️ `︲Interfaces réseau
+
+Le routeur possède **deux interfaces principales** :
+
+- ` 🌐 `︲**GigabitEthernet0/0/0 (WAN)**  
+  → Adresse IP : `172.19.0.2`  
+  → Connectée à Internet  
+
+- ` 🏠 `︲**GigabitEthernet0/0/1 (LAN)**  
+  → Adresse IP : `172.17.0.1`  
+  → Connectée au switch (réseau interne)
+
+---
+
+> [!TIP]
+> Le routeur joue exactement le même rôle qu’une **box Internet**, mais avec un contrôle total sur le routage et la sécurité.
+
+---
+
+<a id="nat"></a>
+# ` 🔁 `︲Fonctionnement du NAT
+
+---
+
+> [!NOTE]
+> Le NAT (**Network Address Translation**) permet à plusieurs machines privées de partager une seule adresse IP publique.
+
+---
+
+### ` 📡 `︲Principe
+
+- Les machines internes utilisent des IP privées
+- Le routeur remplace ces IP par **son IP publique**
+- Il maintient une table de correspondance
+
+---
+
+### ` 📊 `︲Réseaux autorisés
+
 - `192.168.1.0/24`
 - `10.0.0.0/8`
 - `172.18.0.0/16`
@@ -31,92 +97,224 @@ Les réseaux qui ont le droit de passer par Internet :
 
 ---
 
-### 3. 🗺️ Les routes (GPS du routeur)
-Le routeur sait où envoyer les données grâce à des **routes statiques** :
-
-| Destination | Direction |
-|-------------|-----------|
-| Tout le reste (Internet) | `172.19.0.1` |
-| Réseau `10.x.x.x` | `172.17.0.255` |
-| Réseau `172.18.x.x` | `172.17.0.255` |
-| Réseau `192.168.0.x` | `172.17.0.255` |
+> [!IMPORTANT]
+> Sans NAT, aucune machine interne ne peut accéder à Internet.
 
 ---
 
-### 4. 🔐 La sécurité
-- La connexion à distance se fait uniquement en **SSH** (connexion chiffrée)
-- Le **HTTP** (non sécurisé) est désactivé
-- Le **CDP** est désactivé (le routeur ne se présente pas aux autres équipements)
+<a id="routage"></a>
+# ` 🗺️ `︲Routage
 
 ---
 
-## C'est quoi le fichier "`config-switch-complet`" ?
-
-C'est la configuration d'un **switch Cisco** (modèle Catalyst 3750v2-24TS) qui est le **cœur du réseau local**. Il découpe le réseau en plusieurs zones séparées appelées **VLANs**.
+> [!NOTE]
+> Le routeur utilise des **routes statiques** pour savoir où envoyer les paquets.
 
 ---
 
-## Ce que fait le switch
+### ` 📊 `︲Table de routage
 
-### 1. 🗂️ Les VLANs (Les zones du réseau)
-Le switch divise le réseau en **5 zones distinctes** :
+| Destination | Passerelle |
+|------------|-----------|
+| Internet (défaut) | `172.19.0.1` |
+| `10.0.0.0/8` | `172.17.0.255` |
+| `172.18.0.0/16` | `172.17.0.255` |
+| `192.168.0.0/24` | `172.17.0.255` |
 
-| VLAN | Ports concernés | Adresse IP du switch | Réseau |
-|------|----------------|---------------------|--------|
-| VLAN 1 | (gestion) | `192.168.1.250` | `192.168.1.0/24` |
-| VLAN 2 | Fa1/0/1 → 1/0/4 | `10.0.0.255` | `10.0.0.0/8` |
-| VLAN 3 | Fa1/0/5 → 1/0/8 | `172.18.0.255` | `172.18.0.0/16` |
-| VLAN 4 | Fa1/0/9 → 1/0/12 | `192.168.0.254` | `192.168.0.0/24` |
+---
+
+> [!TIP]
+> La route par défaut est critique :  
+> sans elle → aucune sortie vers Internet.
+
+---
+
+<a id="securite-routeur"></a>
+# ` 🔐 `︲Sécurité du routeur
+
+---
+
+### ` 🛡️ `︲Mesures appliquées
+
+- ` 🔐 `︲Connexion distante via **SSH uniquement**
+- ` ❌ `︲HTTP désactivé
+- ` 👻 `︲CDP désactivé (pas de visibilité réseau)
+
+---
+
+> [!TIP]
+> Désactiver CDP évite de donner des infos aux attaquants sur ton infra.
+
+---
+
+<a id="switch"></a>
+# ` 🔻 `︲Présentation du switch L3
+
+---
+
+> [!NOTE]
+> Le switch est le **cœur du réseau local**.  
+> Il segmente le réseau via des VLANs et gère le routage interne.
+
+---
+
+<a id="vlans"></a>
+# ` 🗂️ `︲VLANs
+
+---
+
+> [!NOTE]
+> Les VLANs permettent de **séparer logiquement le réseau**.
+
+---
+
+### ` 📊 `︲Configuration
+
+| VLAN | Ports | IP Switch | Réseau |
+|------|------|----------|--------|
+| VLAN 1 | Gestion | `192.168.1.250` | `192.168.1.0/24` |
+| VLAN 2 | Fa1/0/1 → 4 | `10.0.0.255` | `10.0.0.0/8` |
+| VLAN 3 | Fa1/0/5 → 8 | `172.18.0.255` | `172.18.0.0/16` |
+| VLAN 4 | Fa1/0/9 → 12 | `192.168.0.254` | `192.168.0.0/24` |
 | VLAN 5 | Fa1/0/22 | `172.17.0.255` | `172.17.0.0/16` |
 
 ---
 
-### 2. 📡 Le DHCP Helper (Distributeur d'adresses IP)
-Les VLANs 2 et 3 utilisent un **serveur DHCP distant** à l'adresse `192.168.0.1`
-
-> Concrètement, quand un appareil se connecte sur ces ports, il demande une adresse IP. Le switch **redirige cette demande** vers le serveur DHCP qui se trouve dans le VLAN 4
-
----
-
-### 3. 🗺️ Le Routage
-- Le switch fait du **routage entre les VLANs** (`ip routing` activé)
-- Toutes les connexions vers l'extérieur passent par `172.17.0.1` (le routeur)
+> [!IMPORTANT]
+> Chaque VLAN est un **réseau isolé**.  
+> Sans routage → aucune communication entre eux.
 
 ---
 
-### 4. 🔐 La Sécurité
-- Possède un **certificat SSL auto-signé** pour les connexions sécurisées
-- Le **HTTP et HTTPS** sont activés (interface web d'administration)
-- Utilise le **Spanning Tree (PVST)** pour éviter les boucles réseau
+<a id="dhcp"></a>
+# ` 📡 `︲DHCP Helper
 
 ---
 
-## ⚠️ Points faibles notés
-
-| # | Problème | Détail |
-|---|----------|--------|
-| 1 | **HTTP activé** | Connexion non chiffrée possible sur l'interface web |
-| 2 | **Pas de mot de passe** | Accès VTY sans authentification (`login` sans password) |
-| 3 | **Pas de chiffrement** | `no service password-encryption` |
-| 4 | **Ports inutilisés** | Les ports `Fa1/0/13` à `Fa1/0/24` (sauf 22) ne sont pas désactivés ⚠️ |
-| 5 | **IOS ancienne** | Version `12.2` très ancienne, potentiellement des failles de sécurité |
+> [!NOTE]
+> Le DHCP Helper permet aux VLANs d’utiliser un serveur DHCP distant.
 
 ---
 
-## Schéma simplifié
+### ` ⚙️ `︲Fonctionnement
+
+- VLAN 2 et 3 → pas de serveur DHCP local
+- Le switch redirige les requêtes vers :
+  → `192.168.0.1` (VLAN 4)
+
+---
+
+> [!TIP]
+> Sans DHCP Helper → aucun client ne reçoit d’IP dans ces VLANs.
+
+---
+
+<a id="intervlan"></a>
+# ` 🔁 `︲Routage inter-VLAN
+
+---
+
+> [!NOTE]
+> Le switch effectue le routage entre VLANs grâce à `ip routing`.
+
+---
+
+### ` ⚙️ `︲Principe
+
+- Communication interne directe entre VLANs
+- Sortie Internet via :
+  → `172.17.0.1` (routeur)
+
+---
+
+> [!IMPORTANT]
+> Le switch agit comme un **routeur interne**.
+
+---
+
+<a id="securite-switch"></a>
+# ` 🔐 `︲Sécurité du switch
+
+---
+
+### ` 🛡️ `︲Mesures en place
+
+- Certificat SSL auto-signé
+- HTTP + HTTPS activés
+- Spanning Tree (PVST)
+
+---
+
+> [!WARNING]
+> HTTP activé = surface d’attaque inutile.
+
+---
+
+<a id="faiblesses"></a>
+# ` ⚠️ `︲Analyse des faiblesses
+
+---
+
+| # | Problème | Impact |
+|---|---------|-------|
+| 1 | HTTP activé | Accès non sécurisé |
+| 2 | Pas de mot de passe VTY | Accès distant libre |
+| 3 | Pas de chiffrement | Mots de passe visibles |
+| 4 | Ports ouverts | Risque d’intrusion |
+| 5 | IOS obsolète | Failles potentielles |
+
+---
+
+> [!WARNING]
+> En production, cette configuration est **clairement vulnérable**.
+
+---
+
+<a id="schema"></a>
+# ` 📐 `︲Schéma réseau
+
+---
 
 ```
+
 Internet
-   |
+|
 [Routeur 172.17.0.1]
-   |
-[Switch - VLAN 5 : 172.17.0.255]
-   |
-   |── VLAN 2 : Réseau 10.0.0.0/8     (Ports 1-4)
-   |── VLAN 3 : Réseau 172.18.0.0/16  (Ports 5-8)
-   |── VLAN 4 : Réseau 192.168.0.0/24 (Ports 9-12) ← Serveur DHCP
-   |── VLAN 1 : Réseau 192.168.1.0/24 (Gestion)
+|
+[Switch L3 - VLAN 5]
+|
+|── VLAN 2 → 10.0.0.0/8
+|── VLAN 3 → 172.18.0.0/16
+|── VLAN 4 → 192.168.0.0/24 (DHCP)
+|── VLAN 1 → 192.168.1.0/24 (Gestion)
+
 ```
+
+---
+
+> [!TIP]
+> Architecture classique :
+> segmentation + routage centralisé + sortie unique.
+
+---
+
+## ` 🧠 `︲Conclusion
+
+---
+
+> [!NOTE]
+> Cette infrastructure met en place :
+
+- Cloisonnement réseau via VLANs
+- Routage inter-VLAN efficace
+- Accès Internet via NAT
+- Centralisation du trafic
+
+---
+
+> [!IMPORTANT]
+> Base solide pour un réseau d’entreprise…  
+> mais **sécurité à corriger avant toute mise en production**.
 
 ---
 
