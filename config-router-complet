@@ -1,0 +1,107 @@
+
+!
+! Last configuration change at 14:17:05 UTC Fri Dec 19 2025
+!
+version 16.5
+service timestamps debug datetime msec
+service timestamps log datetime msec
+platform qfp utilization monitor load 80
+no platform punt-keepalive disable-kernel-core
+!
+hostname Router
+!
+boot-start-marker
+boot-end-marker
+!
+!
+!
+no aaa new-model
+!
+!
+!
+
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+subscriber templating
+!
+!
+multilink bundle-name authenticated
+!
+!
+!
+!
+!
+!
+license udi pid ISR4221/K9 sn FGL213991SN
+!
+diagnostic bootup level minimal
+spanning-tree extend system-id
+!
+!
+!
+redundancy
+ mode none
+!
+!
+no cdp run
+!
+!
+!
+!
+!
+!
+interface GigabitEthernet0/0/0
+ ip address 172.19.0.2 255.255.0.0
+ ip nat outside
+ negotiation auto
+!
+interface GigabitEthernet0/0/1
+ ip address 172.17.0.1 255.255.0.0
+ ip nat inside
+ negotiation auto
+!
+ip nat inside source list 1 interface GigabitEthernet0/0/0 overload
+ip forward-protocol nd
+no ip http server
+ip http secure-server
+ip route 0.0.0.0 0.0.0.0 172.19.0.1
+ip route 10.0.0.0 255.0.0.0 172.17.0.255
+ip route 172.18.0.0 255.255.0.0 172.17.0.255
+ip route 192.168.0.0 255.255.255.0 172.17.0.255
+!
+ip ssh server algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+ip ssh client algorithm encryption aes128-ctr aes192-ctr aes256-ctr
+!
+access-list 1 permit 192.168.1.0 0.0.0.255
+access-list 1 permit 10.0.0.0 0.255.255.255
+access-list 1 permit 172.18.0.0 0.0.255.255
+access-list 1 permit 192.168.0.0 0.0.0.255
+access-list 1 permit 172.17.0.0 0.0.255.255
+!
+!
+!
+!
+control-plane
+!
+!
+line con 0
+ transport input none
+ stopbits 1
+line vty 0 4
+ login
+!
+no network-clock synchronization automatic
+!
+!
+!
+!
+!
+end
