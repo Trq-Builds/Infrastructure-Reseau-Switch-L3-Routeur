@@ -87,15 +87,10 @@ Internet
 ---
 
 ### DHCP
-- DHCP externe → `192.168.0.1` (VLAN 4)
+- Serveur DHCP : Sur serveur AD → `192.168.0.1` (VLAN 4)
 - Helper configuré sur :
-  - VLAN 2
-  - VLAN 3
-
----
-
-### STP
-- PVST actif
+  - VLAN 2 : 10.0.0.1 à 10.0.0.254, Passerelle : 10.0.0.255, Serveur DNS : 192.168.0.1
+  - VLAN 3 : 10.0.0.1 à 10.0.0.254, Passerelle : 10.0.0.255, Serveur DNS : 192.168.0.1
 
 ---
 
@@ -110,47 +105,11 @@ Internet
 ### Interne
 - Routage inter-VLAN assuré par le switch
 
-### Sortie Internet
-1. Client → SVI VLAN
+### Cheminement d'un client pour acceder à Internet :
+1. Client → VLAN
 2. Switch → routeur (`172.17.0.1`)
 3. NAT → sortie WAN
 
 ---
-
-## ` ⚠️ `︲Points critiques
-
-- Next-hop `.255` côté routeur → comportement non standard
-- DHCP dépendant VLAN 4 (`192.168.0.1`)
-- VLAN 5 = transit unique vers routeur
-- Pas de redondance
-
----
-
-## ` 🚨 `︲Faiblesses
-
-- HTTP actif sur switch
-- VTY sans auth
-- `no service password-encryption`
-- Ports inutilisés ouverts (Fa1/0/13 → 24 sauf 22)
-- IOS 12.2 (obsolète)
-
----
-
-## ` 🧠 `︲À savoir avant intervention
-
-- Toute sortie réseau dépend du routeur `172.17.0.1`
-- DHCP centralisé → panne VLAN 4 = impact large
-- Switch = point de routage interne critique
-- Aucune tolérance de panne
-
----
-
-## ` 📍 `︲Checklist rapide
-
-- Accès routeur OK (SSH)
-- Reach `172.17.0.1`
-- DHCP `192.168.0.1` up
-- Default route switch OK
-- NAT fonctionnel
 
 ---
