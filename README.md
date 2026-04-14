@@ -30,7 +30,7 @@ Internet
 
 ### Interfaces
 - `Gi0/0/0` → WAN  
-  `172.19.0.2` → GW `172.19.0.1`
+  `172.19.0.2` → Gateway `172.19.0.1`
 
 - `Gi0/0/1` → LAN  
   `172.17.0.1` → vers switch (VLAN 5)
