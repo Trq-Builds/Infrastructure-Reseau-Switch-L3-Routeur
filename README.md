@@ -68,9 +68,9 @@ Internet
 
 ## ` 🖧 `︲Switch L3 (3750v2)
 
-### VLANs / SVI
+### VLANs
 
-| VLAN | IP SVI | Réseau | Ports |
+| VLAN | IP | Réseau | Ports |
 |------|--------|--------|------|
 | 1 | 192.168.1.250 | Mgmt | - |
 | 2 | 10.0.0.255 | 10.0.0.0/8 | Fa1/0/1-4 |
